@@ -200,21 +200,38 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .menu-button {
   display: none; background: none; border: 0; color: inherit; cursor: pointer;
   width: 44px; height: 44px; align-items: center; justify-content: center;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+  z-index: 100;
 }
 
 /* MOBILE SHEET */
 .mobile-sheet {
   position: fixed;
-  inset: 76px 0 0;
+  top: 76px;
+  left: 0;
+  right: 0;
+  bottom: auto;
+  height: calc(100vh - 76px);
+  height: calc(100svh - 76px);
   background: var(--ink);
   color: white;
-  padding: 40px var(--section-pad-x) 60px;
+  padding: 40px var(--section-pad-x) 80px;
   opacity: 0;
   pointer-events: none;
   transform: translateY(-8px);
   transition: opacity 0.35s var(--ease-out), transform 0.35s var(--ease-out);
-  z-index: 85;
+  z-index: 95;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+@supports (height: 100dvh) {
+  .mobile-sheet {
+    height: calc(100dvh - 76px);
+    padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+  }
 }
 .mobile-sheet.is-open { opacity: 1; pointer-events: auto; transform: translateY(0); }
 .mobile-sheet ol { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line-dark); }
