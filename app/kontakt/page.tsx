@@ -4,8 +4,9 @@ import { useEffect, useRef, useState } from 'react'
 import { ArrowUpRight, Check, FileText, Mail, MapPin, Paperclip, Phone, X } from 'lucide-react'
 import { Reveal } from '@/components/site/reveal'
 
-const MAX_FILES = 10
-const MAX_FILE_SIZE = 10 * 1024 * 1024
+const MAX_FILES = 5
+const MAX_FILE_SIZE = 7 * 1024 * 1024
+const MAX_TOTAL_SIZE = 25 * 1024 * 1024
 
 function formatBytes(bytes: number) {
   if (bytes < 1024) return `${bytes} B`
@@ -15,11 +16,15 @@ function formatBytes(bytes: number) {
 
 export default function KontaktPage() {
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [files, setFiles] = useState<File[]>([])
   const [dragActive, setDragActive] = useState(false)
   const [uploadNote, setUploadNote] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const dragCounter = useRef(0)
+
+  const totalBytes = files.reduce((sum, f) => sum + f.size, 0)
+  const overTotalLimit = totalBytes > MAX_TOTAL_SIZE
 
   useEffect(() => {
     if (!inputRef.current) return
@@ -42,23 +47,36 @@ export default function KontaktPage() {
 
   function addFiles(incoming: FileList | File[]) {
     const incomingArr = Array.from(incoming)
+    const notes: string[] = []
     const combined: File[] = []
+    let runningSize = 0
+    let rejectedForTotal = 0
+
     for (const f of [...files, ...incomingArr]) {
       if (combined.some((x) => x.name === f.name && x.size === f.size)) continue
       if (f.size > MAX_FILE_SIZE) continue
+      if (runningSize + f.size > MAX_TOTAL_SIZE) {
+        rejectedForTotal++
+        continue
+      }
       combined.push(f)
+      runningSize += f.size
     }
     const trimmed = combined.slice(0, MAX_FILES)
     const rejectedForLimit = combined.length - trimmed.length
     setFiles(trimmed)
-    if (rejectedForLimit > 0) {
-      setUploadNote(`Maximal ${MAX_FILES} Dateien. ${rejectedForLimit} ignoriert.`)
-    } else if (incomingArr.some((f) => f.size > MAX_FILE_SIZE)) {
-      setUploadNote('Einzeldateien dürfen max. 10 MB gross sein.')
-    } else {
-      setUploadNote(null)
+
+    if (incomingArr.some((f) => f.size > MAX_FILE_SIZE)) {
+      notes.push(`Einzeldateien max. ${MAX_FILE_SIZE / 1024 / 1024} MB.`)
     }
-    setTimeout(() => setUploadNote(null), 6000)
+    if (rejectedForLimit > 0) {
+      notes.push(`Max. ${MAX_FILES} Dateien, ${rejectedForLimit} ignoriert.`)
+    }
+    if (rejectedForTotal > 0) {
+      notes.push(`Gesamtlimit ${MAX_TOTAL_SIZE / 1024 / 1024} MB erreicht, ${rejectedForTotal} ignoriert.`)
+    }
+    setUploadNote(notes.length ? notes.join(' ') : null)
+    if (notes.length) setTimeout(() => setUploadNote(null), 7000)
   }
 
   function removeFile(index: number) {
@@ -110,11 +128,28 @@ export default function KontaktPage() {
   }
 
   async function submitForm(form: HTMLFormElement) {
+    if (overTotalLimit) {
+      setStatus('error')
+      setErrorMessage(`Die Anhänge sind zusammen zu gross (${formatBytes(totalBytes)}). Maximum sind ${MAX_TOTAL_SIZE / 1024 / 1024} MB.`)
+      return
+    }
     setStatus('loading')
+    setErrorMessage(null)
     try {
       const res = await fetch('/api/contact', { method: 'POST', body: new FormData(form) })
-      setStatus(res.ok ? 'success' : 'error')
+      if (res.ok) {
+        setStatus('success')
+        return
+      }
+      let serverMessage: string | undefined
+      try {
+        const data = await res.json()
+        if (data && typeof data.error === 'string') serverMessage = data.error
+      } catch {}
+      setErrorMessage(serverMessage ?? null)
+      setStatus('error')
     } catch {
+      setErrorMessage(null)
       setStatus('error')
     }
   }
@@ -248,11 +283,11 @@ export default function KontaktPage() {
                         : 'Dateien hierher ziehen'}
                   </strong>
                   <span>
-                    oder klicken zum Auswählen · PDF, DOCX, Bilder · max. {MAX_FILES} Dateien · 10 MB pro Datei
+                    oder klicken zum Auswählen · PDF, DOCX, Bilder · max. {MAX_FILES} Dateien · {MAX_FILE_SIZE / 1024 / 1024} MB pro Datei · {MAX_TOTAL_SIZE / 1024 / 1024} MB insgesamt
                   </span>
                 </div>
-                <span className="dropzone-counter">
-                  {files.length}/{MAX_FILES}
+                <span className={`dropzone-counter ${overTotalLimit ? 'is-over' : ''}`}>
+                  {files.length}/{MAX_FILES} · {formatBytes(totalBytes)}
                 </span>
               </div>
 
@@ -284,10 +319,10 @@ export default function KontaktPage() {
 
             {status === 'error' && (
               <p className="form-error">
-                Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut oder schreiben Sie uns direkt an info@mr-work.ch.
+                {errorMessage ?? 'Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut oder schreiben Sie uns direkt an info@mr-work.ch.'}
               </p>
             )}
-            <button className="button button-light" type="submit" disabled={status === 'loading'}>
+            <button className="button button-light" type="submit" disabled={status === 'loading' || overTotalLimit}>
               {status === 'loading' ? 'Wird gesendet…' : (
                 <>
                   Anfrage senden <ArrowUpRight size={16} />

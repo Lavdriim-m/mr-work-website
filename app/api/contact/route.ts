@@ -3,6 +3,13 @@ import { NextRequest, NextResponse } from 'next/server'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
+const MAX_FILES = 5
+const MAX_FILE_SIZE = 7 * 1024 * 1024
+const MAX_TOTAL_SIZE = 25 * 1024 * 1024
+
+export const runtime = 'nodejs'
+export const maxDuration = 60
+
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData()
@@ -13,15 +20,34 @@ export async function POST(request: NextRequest) {
     const phone = formData.get('phone') as string
     const need = formData.get('need') as string
     const message = formData.get('message') as string
-    const files = formData.getAll('files') as File[]
+    const files = (formData.getAll('files') as File[]).filter((f) => f.size > 0)
+
+    if (files.length > MAX_FILES) {
+      return NextResponse.json(
+        { error: `Zu viele Dateien. Maximum sind ${MAX_FILES}.` },
+        { status: 413 },
+      )
+    }
+    const oversize = files.find((f) => f.size > MAX_FILE_SIZE)
+    if (oversize) {
+      return NextResponse.json(
+        { error: `Datei "${oversize.name}" ist zu gross (max. ${MAX_FILE_SIZE / 1024 / 1024} MB pro Datei).` },
+        { status: 413 },
+      )
+    }
+    const totalSize = files.reduce((sum, f) => sum + f.size, 0)
+    if (totalSize > MAX_TOTAL_SIZE) {
+      return NextResponse.json(
+        { error: `Die Anhänge sind zusammen zu gross (${(totalSize / 1024 / 1024).toFixed(1)} MB). Maximum sind ${MAX_TOTAL_SIZE / 1024 / 1024} MB.` },
+        { status: 413 },
+      )
+    }
 
     const attachments = await Promise.all(
-      files
-        .filter((f) => f.size > 0)
-        .map(async (file) => ({
-          filename: file.name,
-          content: Buffer.from(await file.arrayBuffer()),
-        }))
+      files.map(async (file) => ({
+        filename: file.name,
+        content: Buffer.from(await file.arrayBuffer()),
+      })),
     )
 
     const { error } = await resend.emails.send({
@@ -50,12 +76,19 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error('Resend error:', error)
+      const name = (error as { name?: string }).name
+      if (name === 'timeout_error') {
+        return NextResponse.json(
+          { error: 'Die Anhänge sind zu gross für den E-Mail-Versand. Bitte reduzieren Sie die Dateigrösse oder senden Sie uns die Unterlagen direkt an info@mr-work.ch.' },
+          { status: 413 },
+        )
+      }
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
     return NextResponse.json({ success: true })
   } catch (err) {
     console.error('Contact route error:', err)
-    return NextResponse.json({ error: 'Interner Fehler' }, { status: 500 })
+    return NextResponse.json({ error: 'Interner Fehler. Bitte versuchen Sie es erneut oder schreiben Sie direkt an info@mr-work.ch.' }, { status: 500 })
   }
 }

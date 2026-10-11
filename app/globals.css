@@ -1339,6 +1339,11 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   letter-spacing: 0.1em;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+  transition: background 0.25s var(--ease-out), color 0.25s var(--ease-out);
+}
+.dropzone-counter.is-over {
+  background: rgba(229, 72, 77, 0.2);
+  color: #ff7a7f;
 }
 .upload-note {
   margin: 0;
