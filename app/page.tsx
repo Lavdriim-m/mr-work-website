@@ -1,92 +1,250 @@
 'use client'
 
-import { ArrowDownRight, ArrowRight, Check, ChevronDown, Clock3, Mail, MapPin, Menu, Phone, ShieldCheck, Sparkles, Users, X } from 'lucide-react'
-import { useState } from 'react'
+import Link from 'next/link'
+import { ArrowDownRight, ArrowUpRight, Clock3, ShieldCheck, Sparkles, Users } from 'lucide-react'
+import { Reveal, Stagger, StaggerItem } from '@/components/site/reveal'
+import { Marquee } from '@/components/site/marquee'
+import { Magnetic } from '@/components/site/magnetic'
+import { ScrollProgress } from '@/components/site/scroll-progress'
 
 const services = [
-  { number: '01', title: 'Temporärarbeit', text: 'Flexible Einsätze für kurzfristige Auftragsspitzen. Wir stellen schnell das richtige Personal bereit – ohne langwierige Prozesse.' },
-  { number: '02', title: 'Personalvermittlung', text: 'Wir finden Mitarbeitende, die fachlich überzeugen, Verantwortung übernehmen und langfristig zu Ihrem Unternehmen passen.' },
-  { number: '03', title: 'Try & Hire', text: 'Lernen Sie Ihre zukünftigen Mitarbeitenden im echten Arbeitsalltag kennen und entscheiden Sie erst dann, wenn Sie wirklich überzeugt sind.' },
-  { number: '04', title: 'HR-Abwicklung', text: 'Lohnabrechnung, Sozialversicherungen, Verträge – wir kümmern uns um den administrativen Aufwand. Sie um Ihr Kerngeschäft.' },
+  { number: '01', slug: 'temporaer', title: 'Temporärarbeit', text: 'Flexible Einsätze für kurzfristige Auftragsspitzen. Wir stellen schnell das richtige Personal bereit – ohne langwierige Prozesse.' },
+  { number: '02', slug: 'vermittlung', title: 'Personalvermittlung', text: 'Wir finden Mitarbeitende, die fachlich überzeugen, Verantwortung übernehmen und langfristig zu Ihrem Unternehmen passen.' },
+  { number: '03', slug: 'try-and-hire', title: 'Try & Hire', text: 'Lernen Sie Ihre zukünftigen Mitarbeitenden im echten Arbeitsalltag kennen und entscheiden Sie erst dann, wenn Sie wirklich überzeugt sind.' },
+  { number: '04', slug: 'hr', title: 'HR-Abwicklung', text: 'Lohnabrechnung, Sozialversicherungen, Verträge – wir kümmern uns um den administrativen Aufwand. Sie um Ihr Kerngeschäft.' },
 ]
 
 const industries = [
-  { title: 'Handwerk', text: 'Ob Schreiner, Elektriker oder Sanitär, wir kennen das Handwerk und finden die Menschen, die wirklich passen.', image: '01' },
-  { title: 'Bau', text: 'Ob Hochbau oder Tiefbau, wir liefern zuverlässige Fachkräfte, die auf der Baustelle sofort einsatzbereit sind.', image: '02' },
-  { title: 'Industrie', text: 'Automatiker, Polymechaniker, Schweisser: präzise, zuverlässig und einsatzbereit.', image: '03' },
-  { title: 'Logistik', text: 'Lageristen, Chauffeure, Staplerfahrer – zuverlässige Kräfte für reibungslose Abläufe.', image: '04' },
+  { title: 'Handwerk', slug: 'handwerk', text: 'Schreiner, Elektriker, Sanitär – Menschen, die ihr Handwerk verstehen.', image: 'https://images.unsplash.com/photo-1497219055242-93359eeed651?auto=format&fit=crop&w=900&q=80', tag: '01' },
+  { title: 'Bau', slug: 'bau', text: 'Hochbau oder Tiefbau. Zuverlässige Fachkräfte, sofort einsatzbereit.', image: 'https://images.unsplash.com/photo-1653280662710-1cac52cde6d7?auto=format&fit=crop&w=900&q=80', tag: '02' },
+  { title: 'Industrie', slug: 'industrie', text: 'Automatiker, Polymechaniker, Schweisser – präzise und einsatzbereit.', image: 'https://images.unsplash.com/photo-1598302936625-6075fbd98dd7?auto=format&fit=crop&w=900&q=80', tag: '03' },
+  { title: 'Logistik', slug: 'logistik', text: 'Lageristen, Chauffeure, Staplerfahrer – für reibungslose Abläufe.', image: 'https://images.unsplash.com/photo-1740914994657-f1cdffdc418e?auto=format&fit=crop&w=900&q=80', tag: '04' },
 ]
 
 const steps = [
-  ['01', 'Anfrage stellen', 'Füllen Sie unser Kontaktformular aus oder rufen Sie uns direkt an. Kostenlos und unverbindlich.'],
-  ['02', 'Beratungsgespräch', 'Wir verstehen Ihre Anforderungen und definieren gemeinsam das ideale Profil für Ihre offene Stelle.'],
-  ['03', 'Kandidaten erhalten', 'Innerhalb von 2 Stunden erhalten Sie passende, geprüfte Kandidaten direkt auf den Tisch.'],
-  ['04', 'Einsatz starten', 'Sie wählen, wir kümmern uns um Vertrag, Administration und Nachbetreuung.'],
+  ['01', 'Anfrage stellen', 'Kurzes Formular oder ein Anruf. Kostenlos und unverbindlich.'],
+  ['02', 'Beratungsgespräch', 'Wir verstehen Ihre Anforderungen und definieren das ideale Profil.'],
+  ['03', 'Kandidaten erhalten', 'Innerhalb von 2 Stunden geprüfte Profile auf Ihrem Tisch.'],
+  ['04', 'Einsatz starten', 'Sie wählen, wir übernehmen Vertrag, Administration, Nachbetreuung.'],
 ]
 
-export default function Page() {
-  const [menuOpen, setMenuOpen] = useState(false)
-  const [formStatus, setFormStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
+const tickerItems = ['Temporärarbeit', 'Personalvermittlung', 'Try & Hire', 'HR-Abwicklung', 'Handwerk', 'Bau', 'Industrie', 'Logistik']
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    setFormStatus('loading')
-    try {
-      const res = await fetch('/api/contact', { method: 'POST', body: new FormData(e.currentTarget) })
-      setFormStatus(res.ok ? 'success' : 'error')
-    } catch {
-      setFormStatus('error')
-    }
-  }
-
+export default function HomePage() {
   return (
-    <main className="site-shell">
-      <header className="site-header">
-        <a href="#top" className="brand" aria-label="MR Work AG Startseite"><img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/MrWork%20Logo%20Transparent%20%28High%20Res%29-OHPPWG77XCNct2QqHGvHKub2pEJLNI.png" alt="MR WORK AG" /></a>
-        <nav className={menuOpen ? 'nav nav-open' : 'nav'} aria-label="Hauptnavigation">
-          <a href="#leistungen" onClick={() => setMenuOpen(false)}>Leistungen</a>
-          <a href="#branchen" onClick={() => setMenuOpen(false)}>Branchen</a>
-          <a href="#prozess" onClick={() => setMenuOpen(false)}>Prozess</a>
-          <a className="nav-cta" href="#kontakt" onClick={() => setMenuOpen(false)}>Jetzt anfragen <ArrowRight size={15} /></a>
-        </nav>
-        <button className="menu-button" aria-label={menuOpen ? 'Menü schliessen' : 'Menü öffnen'} onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? <X /> : <Menu />}</button>
-      </header>
+    <>
+      <ScrollProgress />
 
       <section id="top" className="hero">
         <div className="hero-copy">
-          <p className="eyebrow"><span className="eyebrow-line" /> Ihr Partner für Personal in der Schweiz</p>
-          <h1>Die richtigen<br /><em>Menschen.</em><br /><span>Zur richtigen Zeit.</span></h1>
-          <p className="hero-lead">Temporärarbeit, Personalvermittlung & HR-Abwicklung – schnell, persönlich und zuverlässig.</p>
-          <div className="hero-actions"><a className="button button-dark" href="#kontakt">Jetzt anfragen <ArrowRight size={17} /></a><a className="text-link" href="#leistungen">Unsere Leistungen <ArrowDownRight size={17} /></a></div>
+          <Reveal as="p" className="eyebrow">
+            <span className="eyebrow-line" /> Personal für die Schweiz
+          </Reveal>
+          <Reveal as="h1" delay={0.08}>
+            Die richtigen<br />
+            <em>Menschen.</em><br />
+            <span className="mute">Zur richtigen Zeit.</span>
+          </Reveal>
+          <Reveal as="p" delay={0.2} className="hero-lead">
+            Temporärarbeit, Personalvermittlung &amp; HR-Abwicklung. Persönlich geführt aus Zürich.
+            Innerhalb von zwei Stunden auf Ihrem Tisch – nicht in zwei Wochen.
+          </Reveal>
+          <Reveal as="div" delay={0.3} className="hero-actions">
+            <Magnetic>
+              <Link className="button button-dark" href="/kontakt">
+                Jetzt anfragen <ArrowUpRight size={16} />
+              </Link>
+            </Magnetic>
+            <Link className="text-link" href="/leistungen">
+              Unsere Leistungen <ArrowDownRight size={16} />
+            </Link>
+          </Reveal>
         </div>
-        <div className="hero-visual"><div className="hero-image" /><div className="hero-caption"><span>01 / 04</span><span>Verbindungen, die bewegen.</span></div></div>
-        <div className="hero-scroll">Scrollen <span /></div>
+        <div className="hero-visual">
+          <div className="hero-image" />
+          <div className="hero-caption">
+            
+          </div>
+          <div className="hero-plate">
+            <strong><em>2 h</em> Reaktion</strong>
+            <span>Garantierte Antwortzeit</span>
+          </div>
+          <div className="hero-ticker">
+            <Marquee speed={32}>
+              {tickerItems.map((item) => <span key={item}>{item}</span>)}
+            </Marquee>
+          </div>
+        </div>
       </section>
 
       <section className="proof-strip" aria-label="MR Work Vorteile">
-        <div><strong>24<span>h</span></strong><small>Reaktionszeit</small></div><div><strong>100<span>%</span></strong><small>Persönliche Betreuung</small></div><div><strong>360<span>°</span></strong><small>HR-Kompetenz</small></div><p>Wir bringen Menschen und<br className="desktop-only" /> Unternehmen zusammen.</p>
+        <div>
+          <strong>2<span>h</span></strong>
+          <small>Reaktionszeit</small>
+        </div>
+        <div>
+          <strong>100<span>%</span></strong>
+          <small>Persönliche Betreuung</small>
+        </div>
+        <div>
+          <strong>360<span>°</span></strong>
+          <small>HR-Kompetenz</small>
+        </div>
+        <div>
+          <strong>CH<span>·</span></strong>
+          <small>Lokal verankert</small>
+        </div>
+        <p>Wir bringen Menschen und<br />Unternehmen zusammen.</p>
       </section>
 
       <section id="leistungen" className="section services-section">
-        <div className="section-intro"><p className="eyebrow">Was wir bieten</p><h2>Personal,<br /><em>das passt.</em></h2></div>
-        <div className="services-grid">{services.map((service) => <article className="service-card" key={service.number}><span className="card-number">{service.number}</span><div><h3>{service.title}</h3><p>{service.text}</p><a href="#kontakt" aria-label={`Mehr über ${service.title}`}>Mehr erfahren <ArrowUpRight /></a></div></article>)}</div>
+        <div className="section-intro">
+          <Reveal as="p" className="eyebrow"><span className="eyebrow-line" /> Was wir bieten</Reveal>
+          <Reveal as="h2" delay={0.08} className="section-title">
+            Personal,<br /><em>das passt.</em>
+          </Reveal>
+          <Reveal as="div" delay={0.2} style={{ marginTop: 32 } as React.CSSProperties}>
+            <Link className="text-link" href="/leistungen">
+              Alle Leistungen <ArrowUpRight size={16} />
+            </Link>
+          </Reveal>
+        </div>
+        <Stagger as="div" className="services-grid" gap={0.1}>
+          {services.map((service) => (
+            <StaggerItem as="article" key={service.number} className="service-card">
+              <span className="card-number">{service.number}</span>
+              <div>
+                <h3>{service.title}</h3>
+                <p>{service.text}</p>
+                <Link href={`/leistungen#${service.slug}`} aria-label={`Mehr über ${service.title}`}>
+                  Mehr erfahren <ArrowUpRight />
+                </Link>
+              </div>
+            </StaggerItem>
+          ))}
+        </Stagger>
       </section>
 
-      <section id="branchen" className="section industries-section">
-        <div className="section-topline"><p className="eyebrow">Wo wir stark sind</p><a className="text-link" href="#kontakt">Branchen entdecken <ArrowRight size={17} /></a></div>
-        <h2>Verstehen, was<br /><em>Sie bewegt.</em></h2>
-        <div className="industry-grid">{industries.map((industry) => <article className="industry-card" key={industry.title}><div className={`industry-image industry-${industry.image}`}><span>0{industry.image}</span></div><h3>{industry.title}</h3><p>{industry.text}</p></article>)}</div>
+      <section id="branchen" className="industries-section">
+        <div className="section-topline">
+          <div>
+            <Reveal as="p" className="eyebrow"><span className="eyebrow-line" /> Wo wir stark sind</Reveal>
+            <Reveal as="h2" delay={0.08} className="section-title" style={{ color: 'white', marginTop: 16 } as React.CSSProperties}>
+              Verstehen,<br />was <em>Sie bewegt.</em>
+            </Reveal>
+          </div>
+          <Reveal delay={0.2}>
+            <Link className="text-link" href="/branchen">
+              Branchen entdecken <ArrowUpRight size={16} />
+            </Link>
+          </Reveal>
+        </div>
+        <Stagger as="div" className="industry-grid" gap={0.08} delay={0.1}>
+          {industries.map((industry) => (
+            <StaggerItem as="article" key={industry.title} className="industry-card">
+              <Link href={`/branchen#${industry.slug}`} className="industry-image">
+                <div className="industry-image-img" style={{ backgroundImage: `url(${industry.image})` }} />
+                <span className="tag">{industry.tag}</span>
+                <span className="corner"><ArrowUpRight size={14} /></span>
+              </Link>
+              <h3>{industry.title}</h3>
+              <p>{industry.text}</p>
+            </StaggerItem>
+          ))}
+        </Stagger>
       </section>
 
-      <section id="prozess" className="process-section"><div className="process-head"><p className="eyebrow">So einfach geht&apos;s</p><h2>In vier Schritten<br /><em>zum richtigen Personal.</em></h2><p>Von der ersten Anfrage bis zum erfolgreichen Einsatz: Wir machen den Prozess transparent, persönlich und effizient.</p></div><div className="steps-grid">{steps.map(([number, title, text]) => <div className="step" key={number}><span>{number}</span><div><h3>{title}</h3><p>{text}</p></div></div>)}</div></section>
+      <section id="prozess" className="process-section">
+        <div className="process-head">
+          <Reveal as="p" className="eyebrow"><span className="eyebrow-line" /> So einfach geht&apos;s</Reveal>
+          <Reveal as="h2" delay={0.08} className="section-title">
+            In vier Schritten<br /><em>zum richtigen Personal.</em>
+          </Reveal>
+          <Reveal as="p" delay={0.2}>
+            Von der Anfrage bis zum ersten Arbeitstag: transparent, persönlich, effizient.
+          </Reveal>
+          <Reveal delay={0.3} style={{ marginTop: 32 } as React.CSSProperties}>
+            <Link href="/prozess" className="text-link">Prozess im Detail <ArrowUpRight size={16} /></Link>
+          </Reveal>
+        </div>
+        <Stagger as="div" className="steps-grid" gap={0.08}>
+          {steps.map(([number, title, text]) => (
+            <StaggerItem as="div" key={number} className="step">
+              <span>{number}</span>
+              <div>
+                <h3>{title}</h3>
+                <p>{text}</p>
+              </div>
+            </StaggerItem>
+          ))}
+        </Stagger>
+      </section>
 
-      <section className="difference-section"><div className="difference-quote"><p className="eyebrow">Warum MR Work AG?</p><h2>Der Unterschied,<br /><em>den wir machen.</em></h2><p className="quote">„Gute Arbeit beginnt dort, wo Menschen wirklich zusammenpassen.“</p><div className="signature"><strong>Fidan Mustafi</strong><span>Geschäftsführer</span></div></div><div className="difference-list"><div><Clock3 /><span><strong>Blitzschnelle Reaktion</strong><p>Innerhalb von 2 Stunden haben Sie passende Kandidaten auf dem Tisch – garantiert.</p></span></div><div><Users /><span><strong>Persönliche Betreuung</strong><p>Sie sprechen immer mit demselben Menschen, der Ihre Situation kennt.</p></span></div><div><ShieldCheck /><span><strong>Geprüfte Fachkräfte</strong><p>Jede Bewerbung wird sorgfältig geprüft. Nur wirklich qualifizierte Kandidaten erreichen Sie.</p></span></div><div><Sparkles /><span><strong>Lokal verwurzelt</strong><p>Tief verwurzelt im Schweizer Arbeitsmarkt und bestens vernetzt in der ganzen Nation.</p></span></div></div></section>
+      <section className="difference-section">
+        <div className="difference-quote">
+          <Reveal as="p" className="eyebrow"><span className="eyebrow-line" /> Warum MR Work AG?</Reveal>
+          <Reveal as="h2" delay={0.08} className="section-title">
+            Der Unterschied,<br /><em>den wir machen.</em>
+          </Reveal>
+          <Reveal as="p" delay={0.2} className="quote">
+            „Gute Arbeit beginnt dort, wo Menschen wirklich zusammenpassen – nicht dort, wo ein Algorithmus übereinstimmt.&rdquo;
+          </Reveal>
+          <Reveal delay={0.3}>
+            <div className="signature">
+              <strong>Fidan Mustafi</strong>
+              <span>Geschäftsführer &amp; Gründer</span>
+              <Link href="/ueber-uns" className="link">Mehr über uns <ArrowUpRight size={14} /></Link>
+            </div>
+          </Reveal>
+        </div>
+        <Stagger as="div" className="difference-list" gap={0.08}>
+          <StaggerItem as="div">
+            <Clock3 />
+            <span>
+              <strong>Blitzschnelle Reaktion</strong>
+              <p>Innerhalb von 2 Stunden passende Kandidaten auf Ihrem Tisch – garantiert.</p>
+            </span>
+          </StaggerItem>
+          <StaggerItem as="div">
+            <Users />
+            <span>
+              <strong>Persönliche Betreuung</strong>
+              <p>Sie sprechen immer mit derselben Person, die Ihre Situation kennt.</p>
+            </span>
+          </StaggerItem>
+          <StaggerItem as="div">
+            <ShieldCheck />
+            <span>
+              <strong>Geprüfte Fachkräfte</strong>
+              <p>Jedes Profil wird sorgfältig geprüft. Nur wirklich qualifizierte Kandidaten erreichen Sie.</p>
+            </span>
+          </StaggerItem>
+          <StaggerItem as="div">
+            <Sparkles />
+            <span>
+              <strong>Lokal verwurzelt</strong>
+              <p>Tief verwurzelt im Schweizer Arbeitsmarkt, bestens vernetzt in der ganzen Nation.</p>
+            </span>
+          </StaggerItem>
+        </Stagger>
+      </section>
 
-      <section id="kontakt" className="contact-section"><div className="contact-heading"><p className="eyebrow">Kontakt aufnehmen</p><h2>Bereit,<br /><em>loszulegen?</em></h2><p>Füllen Sie das Formular aus und wir melden uns innerhalb von 2 Stunden bei Ihnen. Kostenlos und unverbindlich.</p><div className="contact-details"><a href="https://maps.google.com/?q=Baslerstrasse+30,+8048+Zürich"><MapPin />Baslerstrasse 30, 8048 Zürich</a><a href="tel:+41445003217"><Phone />+41 44 500 32 17</a><a href="mailto:info@mr-work.ch"><Mail />info@mr-work.ch</a></div></div>{formStatus === 'success' ? <div className="form-success"><Check size={32} /><h3>Anfrage gesendet!</h3><p>Vielen Dank. Wir melden uns innerhalb von 2 Stunden bei Ihnen.</p></div> : <form className="contact-form" onSubmit={handleSubmit}><div className="form-row"><label>Ihr Vor- und Nachname *<input required name="name" /></label><label>Firma<input name="company" /></label></div><div className="form-row"><label>E-Mail *<input required type="email" name="email" /></label><label>Telefon<input name="phone" /></label></div><label>Ich suche... *<select required name="need" defaultValue=""><option value="" disabled>Bitte auswählen</option><option>Temporäres Personal</option><option>Festanstellung</option><option>Try & Hire</option><option>HR-Abwicklung</option></select></label><label>Ihre Anfrage<textarea name="message" rows={4} placeholder="Branche, Anzahl Personen, Startdatum ..." /></label><label className="upload-label"><input type="file" name="files" multiple />Lebenslauf und Bewerbungsunterlagen hochladen <span>PDF, DOCX</span></label>{formStatus === 'error' && <p className="form-error">Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut oder schreiben Sie uns direkt an info@mr-work.ch.</p>}<button className="button button-light" type="submit" disabled={formStatus === 'loading'}>{formStatus === 'loading' ? 'Wird gesendet…' : <>Anfrage senden <ArrowRight size={17} /></>}</button></form>}</section>
-
-      <footer className="footer"><a href="#top" className="brand brand-footer"><img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/MrWork%20Logo%20Transparent%20%28High%20Res%29-OHPPWG77XCNct2QqHGvHKub2pEJLNI.png" alt="MR WORK AG" /></a><div className="footer-links"><div><strong>Leistungen</strong><a href="#leistungen">Temporärarbeit</a><a href="#leistungen">Personalvermittlung</a><a href="#leistungen">Try & Hire</a></div><div><strong>Kontakt</strong><a href="#kontakt">Anfrage stellen</a><a href="tel:+41445003217">+41 44 500 32 17</a><a href="mailto:info@mr-work.ch">info@mr-work.ch</a></div></div><div className="footer-bottom"><span>© 2026 MR Work AG. Alle Rechte vorbehalten.</span><span>Zürich · Schweiz</span></div></footer>
-    </main>
+      <section className="cta-band">
+        <Reveal as="h2">
+          Bereit, Ihr<br />Team zu <em>stärken?</em>
+        </Reveal>
+        <Reveal delay={0.1} as="div" className="cta-band-side">
+          <p>
+            Eine Anfrage. Zwei Stunden Antwortzeit. Null Verpflichtung.
+            Sagen Sie uns, wen Sie suchen – wir liefern Profile, die Sie überraschen werden.
+          </p>
+          <Magnetic>
+            <Link href="/kontakt" className="button button-light">
+              Anfrage senden <ArrowUpRight size={16} />
+            </Link>
+          </Magnetic>
+        </Reveal>
+      </section>
+    </>
   )
 }
-
-function ArrowUpRight() { return <ArrowRight size={18} /> }
