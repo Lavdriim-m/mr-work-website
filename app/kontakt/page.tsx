@@ -269,7 +269,6 @@ export default function KontaktPage() {
                   type="file"
                   name="files"
                   multiple
-                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                   onChange={handleInputChange}
                   style={{ display: 'none' }}
                 />
@@ -283,7 +282,7 @@ export default function KontaktPage() {
                         : 'Dateien hierher ziehen'}
                   </strong>
                   <span>
-                    oder klicken zum Auswählen · PDF, DOCX, Bilder · max. {MAX_FILES} Dateien · {MAX_FILE_SIZE / 1024 / 1024} MB pro Datei · {MAX_TOTAL_SIZE / 1024 / 1024} MB insgesamt
+                    oder klicken zum Auswählen · alle Dateitypen · max. {MAX_FILES} Dateien · {MAX_FILE_SIZE / 1024 / 1024} MB pro Datei · {MAX_TOTAL_SIZE / 1024 / 1024} MB insgesamt
                   </span>
                 </div>
                 <span className={`dropzone-counter ${overTotalLimit ? 'is-over' : ''}`}>
