@@ -65,10 +65,10 @@ export default function HomePage() {
           <div className="hero-caption">
             
           </div>
-          <div className="hero-plate">
+          {/*<div className="hero-plate">
             <strong><em>2 h</em> Reaktion</strong>
             <span>Garantierte Antwortzeit</span>
-          </div>
+          </div>*/}
           <div className="hero-ticker">
             <Marquee speed={32}>
               {tickerItems.map((item) => <span key={item}>{item}</span>)}
@@ -78,10 +78,10 @@ export default function HomePage() {
       </section>
 
       <section className="proof-strip" aria-label="MR Work Vorteile">
-        <div>
+        {/*<div>
           <strong>2<span>h</span></strong>
           <small>Reaktionszeit</small>
-        </div>
+        </div>*/}
         <div>
           <strong>100<span>%</span></strong>
           <small>Persönliche Betreuung</small>
@@ -191,8 +191,8 @@ export default function HomePage() {
           </Reveal>
           <Reveal delay={0.3}>
             <div className="signature">
-              <strong>Fidan Mustafi</strong>
-              <span>Geschäftsführer &amp; Gründer</span>
+              {/*<strong>Fidan Mustafi</strong>
+              <span>Geschäftsführer &amp; Gründer</span>*/}
               <Link href="/ueber-uns" className="link">Mehr über uns <ArrowUpRight size={14} /></Link>
             </div>
           </Reveal>

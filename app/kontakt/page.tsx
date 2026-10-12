@@ -237,7 +237,6 @@ export default function KontaktPage() {
                 <option>Festanstellung</option>
                 <option>Try &amp; Hire</option>
                 <option>HR-Abwicklung</option>
-                <option>Gespräch mit Fidan</option>
               </select>
             </label>
             <label>
